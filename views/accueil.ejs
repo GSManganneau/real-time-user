@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<link rel="stylesheet" href="style.css">
+    <title>home</title>
+
+    
+
+</head>
+<body>
+<p id="welcome">Transatel's Monitoring World Users</p>
+<section id = "map">
+
+</section>
+<p id="count"></p>
+<section id="data">
+
+</section>
+</body>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script async defer
+        src="http://maps.googleapis.com/maps/api/js?key=AIzaSyC3HVdKCM4IXO4t2_HxRKMq18y1cAiyDSU&callback=initMap&language=en">
+</script>
+<script src="https://cdn.jsdelivr.net/lodash/4.13.1/lodash.min.js"></script>
+<script type="text/javascript">
+    var map;
+    var infoWindow;
+    var count = 0;
+    var socket = io.connect('http://10.254.1.188:3000');
+    var listOfCircles=[];
+    var deleTime = 60000;
+
+    $('#count').prepend( count + " people(s) were using data in the world in the last minute ");
+
+  
+
+    function increment(callback){
+        count++;
+        if (callback && typeof(callback) === "function") {
+        callback();
+    }
+
+    }
+
+    function initMap() {
+        var mapOptions = {
+            center: {lat: 0, lng: 0},
+            zoom: 2,
+            zoomControl: true,
+            mapTypeControl: true,
+            scaleControl: false,
+            streetViewControl: false,
+            rotateControl: true,
+        };
+        map = map = new google.maps.Map(document.getElementById('map'),mapOptions);      
+        infoWindow = new google.maps.InfoWindow;
+}
+    
+
+
+
+
+     function addCircle(circle){
+
+        if(listOfCircles.length == 0) {
+            circle.setMap(map);
+            listOfCircles.push(circle); 
+            console.log(listOfCircles.length);
+          increment(function(){
+                    $('#count').replaceWith("<p id=\"count\"> "+ count + " people(s) were using data in the world in the last minute </p>" ); 
+            });
+        
+         }
+        else {
+                var circ = _.find(listOfCircles,['id' , circle.id])
+               // body...
+               if (typeof(circ) == 'undefined'){
+                    circle.setMap(map);
+                    listOfCircles.push(circle);
+                    increment(function(){
+                    $('#count').replaceWith("<p id=\"count\"> "+ count + " people(s) were using data in the world in the last minute </p>" ); 
+                    
+            });
+          
+               // }       
+            }
+        }
+    }
+         
+      
+
+     
+      function deleteCircle(){
+        var tempArray = listOfCircles
+        listOfCircles =_.remove(tempArray,function(circle){
+                      if (Date.now()-circle.time > deleTime) {
+                             circle.setMap(null);
+                             count--;
+                             return true;
+                       }
+                   });
+        listOfCircles = tempArray;
+        }
+    
+    function click(event){
+            var circle = this;
+            var contentString =  '<b>Session Info</b><br>' +
+                                 'User IMSI: ' + circle.id +
+                                 '<br>Session volume: ' + circle.volume +
+                                 '<br>Longitude: ' + circle.lon +
+                                 '<br>Latitude: ' + circle.lat ;
+
+            infoWindow.setContent(contentString);
+            infoWindow.setPosition(event.latLng);
+            infoWindow.open(map);
+
+        }
+
+
+    socket.on('data',function(data){
+
+       data =  JSON.parse(data);
+
+      var myLatLng = {lat: parseFloat(data.lat), lng: parseFloat(data.lon)};
+
+        var circle = new google.maps.Circle({
+            lat: data.lat,
+            lon: data.lon,
+            center: myLatLng,
+            time : Date.now(),
+            id : data.imsi,
+            alreadyExist : false,
+            fillColor: '#ff7300',
+            fillOpacity: 0.35,
+            strokeColor: '#ff7300',
+            strokeWeight : 0,
+            volume : data.volume,
+            radius : 2*parseInt(data.volume)
+        });
+
+        circle.addListener('click',click);
+        addCircle(circle);
+        deleteCircle();
+    });
+
+
+</script>
+
+</html>

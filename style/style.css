@@ -1,0 +1,35 @@
+ html, body 
+        { 
+            height: 100%;
+            margin: 0; 
+            padding: 0; 
+            background-color: #B3D1FF;
+        }
+        #map 
+        { 
+            height: 60%;
+            width:75%;
+            margin-right: 12.5%;
+            margin-left: 12.5%;
+            margin-top: 5%;
+            margin-bottom: 5%;
+        }
+        
+        #count
+        {
+            font-family: "Century Gothic";
+            display : inline-block;
+            margin-left:30%;
+            font-size: 30px;
+            color: rgb(255,115,0);
+
+        }
+        #welcome
+        {
+            font-family: "Century Gothic";
+            display : inline-block;
+            margin-left:40%;
+            font-size: 30px;
+            color: rgb(255,115,0);
+
+        }                
